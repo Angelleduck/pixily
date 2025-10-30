@@ -8,6 +8,7 @@ export const theme = {
   Colors: {
     white: "#fff",
     Black: "#000",
+    gray: (value: number) => `rgba(10,10,10,${value})`,
   },
   fontWeight: WeightProps,
   radius: {
