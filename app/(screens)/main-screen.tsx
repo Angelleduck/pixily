@@ -1,22 +1,47 @@
+import Categories from "@/components/categories";
 import Gallery from "@/components/gallery";
-import { categories } from "@/constants/data";
 import { theme } from "@/constants/theme";
 import { hp } from "@/helper/common";
+import { debounce } from "@/helper/utils";
 import { getImages } from "@/service/apiImage";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Page() {
   const [images, setImages] = useState<Record<string, any>[]>([]);
+  const [category, setCategory] = useState<string>("");
+  const [searchText, setSearchText] = useState<string>("");
   useEffect(() => {
     async function fetchData() {
-      const data = await getImages();
+      const data = await getImages({});
       setImages(data);
     }
     fetchData();
   }, []);
+
+  async function fetchData(params: Record<string, any>) {
+    const data = await getImages(params);
+    setImages(data);
+  }
+  function handleSearch(value: string) {
+    setSearchText(value);
+    fetchData({ q: value });
+  }
+  function handleCategory(value: string) {
+    if (category === value) {
+      setCategory("");
+      fetchData({});
+    } else {
+      setCategory(value);
+      fetchData({ category: value });
+    }
+  }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedHandleSearch = useCallback(debounce(handleSearch, 600), []);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
@@ -25,32 +50,25 @@ export default function Page() {
           <FontAwesome6
             name="bars-staggered"
             size={24}
-            color={theme.Colors.gray(0.7)}
+            color={theme.Colors.neutral(0.7)}
           />
         </View>
         <View style={styles.inputContainer}>
           <FontAwesome6
             name="magnifying-glass"
             size={20}
-            color={theme.Colors.gray(0.3)}
+            color={theme.Colors.neutral(0.3)}
           />
           <TextInput
             style={styles.textInput}
+            onChangeText={(text) => {
+              debouncedHandleSearch(text);
+            }}
             placeholder="search for photos..."
           />
         </View>
         <View>
-          <ScrollView
-            horizontal={true}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filter} // important
-          >
-            {categories.map((el) => (
-              <View key={el} style={styles.categoryBox}>
-                <Text style={styles.categoryText}>{el}</Text>
-              </View>
-            ))}
-          </ScrollView>
+          <Categories category={category} handleCategory={handleCategory} />
         </View>
         <Gallery images={images} />
       </ScrollView>
@@ -62,7 +80,7 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: hp(4),
     fontWeight: theme.fontWeight.medium,
-    color: theme.Colors.gray(0.9),
+    color: theme.Colors.neutral(0.9),
   },
   container: {
     flex: 1,
@@ -80,7 +98,7 @@ const styles = StyleSheet.create({
     gap: 6,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: theme.Colors.gray(0.2),
+    borderColor: theme.Colors.neutral(0.2),
     borderRadius: theme.radius.sm,
     paddingHorizontal: 15,
     paddingVertical: 2,
@@ -90,21 +108,5 @@ const styles = StyleSheet.create({
   textInput: {
     fontSize: hp(1.8),
     flex: 1,
-  },
-  filter: {
-    gap: 5,
-    marginBottom: 15,
-  },
-  categoryBox: {
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: theme.Colors.gray(0.2),
-    borderRadius: theme.radius.sm,
-    backgroundColor: "white",
-  },
-  categoryText: {
-    fontWeight: theme.fontWeight.medium,
-    color: theme.Colors.gray(0.8),
   },
 });
