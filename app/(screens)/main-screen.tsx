@@ -1,5 +1,6 @@
-import Categories from "@/components/categories";
+import { Categories } from "@/components/categories";
 import Gallery from "@/components/gallery";
+import Loader from "@/components/Loader";
 import Modal from "@/components/modal";
 import { theme } from "@/constants/theme";
 import { hp } from "@/helper/common";
@@ -9,6 +10,8 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,31 +21,40 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+let page = 1;
 export default function Page() {
   const [images, setImages] = useState<Record<string, any>[]>([]);
   const [category, setCategory] = useState<string>("");
   const [searchText, setSearchText] = useState<string>("");
   const [filters, setFilters] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     async function fetchData() {
       const data = await getImages({});
       setImages(data);
+      setIsLoading(false);
     }
     fetchData();
   }, []);
 
-  async function fetchData(params: Record<string, any>) {
+  async function fetchData(params: Record<string, any>, append = false) {
     const data = await getImages(params);
-    setImages(data);
+
+    if (append) {
+      setImages((prevImages) => [...prevImages, ...data]);
+    } else {
+      setImages(data);
+    }
   }
   function handleSearch(value: string) {
     setSearchText(value);
     fetchData({ q: value });
   }
-  function handleCategory(value: string) {
+  const handleCategory = (value: string) => {
     if (category === value) {
       setCategory("");
       fetchData({});
@@ -50,7 +62,8 @@ export default function Page() {
       setCategory(value);
       fetchData({ category: value });
     }
-  }
+    page = 1;
+  };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedHandleSearch = useCallback(debounce(handleSearch, 600), []);
@@ -78,9 +91,33 @@ export default function Page() {
     handleCloseModalPress();
   };
 
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const contentHeight = e.nativeEvent.contentSize.height;
+    const scrollOffest = e.nativeEvent.contentOffset.y;
+    const scrollViewHeight = e.nativeEvent.layoutMeasurement.height;
+
+    const bottomPosition = contentHeight - scrollViewHeight;
+
+    if (scrollOffest >= bottomPosition - 1) {
+      page += 1;
+      const params: Record<string, any> = { page };
+
+      if (category) params.category = category;
+      if (searchText) params.q = searchText;
+
+      fetchData(params, true);
+    }
+
+    if (scrollOffest < lastScrollY.current) {
+      console.log("scrolled Up");
+    }
+
+    lastScrollY.current = scrollOffest;
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView onScroll={onScroll} scrollEventThrottle={16}>
         <View style={styles.headerContainter}>
           <Text style={styles.titleText}>Pixily</Text>
           <Pressable onPress={handlePresentModalPress}>
@@ -108,7 +145,8 @@ export default function Page() {
         <View>
           <Categories category={category} handleCategory={handleCategory} />
         </View>
-        <Gallery images={images} />
+
+        {isLoading ? <Loader /> : <Gallery images={images} />}
       </ScrollView>
       <Modal
         filters={filters}

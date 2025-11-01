@@ -24,7 +24,7 @@ export function ImageCard({ item, index }: ImageProps) {
   return (
     <View style={[styles.card, sizeStyle(), columnMargin]}>
       <Image
-        transition={100}
+        transition={150}
         style={[sizeStyle()]}
         source={item.webformatURL}
         contentFit="cover"
@@ -37,7 +37,7 @@ export function ImageCard({ item, index }: ImageProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: theme.Colors.neutral(0.2),
+    backgroundColor: theme.Colors.neutral(0.3),
     marginBottom: 10,
     borderRadius: theme.radius.lg,
     overflow: "hidden",

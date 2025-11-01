@@ -1,5 +1,6 @@
 import { categories } from "@/constants/data";
 import { theme } from "@/constants/theme";
+import { useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import Animated, { FadeInRight } from "react-native-reanimated";
 
@@ -8,48 +9,50 @@ interface CategoriesProps {
   handleCategory: (item: string) => void;
 }
 
-export default function Categories({
-  category,
-  handleCategory,
-}: CategoriesProps) {
+export function Categories({ category, handleCategory }: CategoriesProps) {
+  const categoryItems = useMemo(() => {
+    return categories.map((item, idx) => (
+      <Animated.View
+        entering={FadeInRight.delay(idx * 200)
+          .duration(1000)
+          .springify()}
+        key={item}
+        style={[styles.categoryBox]}
+      >
+        <Pressable
+          style={[
+            styles.categoryButton,
+            category === item && {
+              backgroundColor: theme.Colors.neutral(0.8),
+            },
+          ]}
+          onPress={() => {
+            handleCategory(item);
+          }}
+        >
+          <Text
+            style={[
+              styles.categoryText,
+              category === item && {
+                color: theme.Colors.white,
+              },
+            ]}
+          >
+            {item}
+          </Text>
+        </Pressable>
+      </Animated.View>
+    ));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category]);
+
   return (
     <ScrollView
       horizontal={true}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.filter} // important
+      contentContainerStyle={styles.filter}
     >
-      {categories.map((item, idx) => (
-        <Animated.View
-          entering={FadeInRight.delay(idx * 200)
-            .duration(1000)
-            .springify()}
-          key={item}
-          style={[styles.categoryBox]}
-        >
-          <Pressable
-            style={[
-              styles.categoryButton,
-              category === item && {
-                backgroundColor: theme.Colors.neutral(0.8),
-              },
-            ]}
-            onPress={() => {
-              handleCategory(item);
-            }}
-          >
-            <Text
-              style={[
-                styles.categoryText,
-                category === item && {
-                  color: theme.Colors.white,
-                },
-              ]}
-            >
-              {item}
-            </Text>
-          </Pressable>
-        </Animated.View>
-      ))}
+      {categoryItems}
     </ScrollView>
   );
 }
