@@ -18,3 +18,7 @@ export const getImageSize = (height: number, width: number) => {
     return 200;
   }
 };
+
+export const capitalize = (str: string) => {
+  return str.replace(/\b\w/g, (l: string) => l.toUpperCase());
+};

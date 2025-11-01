@@ -1,18 +1,31 @@
 import Categories from "@/components/categories";
 import Gallery from "@/components/gallery";
+import Modal from "@/components/modal";
 import { theme } from "@/constants/theme";
 import { hp } from "@/helper/common";
 import { debounce } from "@/helper/utils";
 import { getImages } from "@/service/apiImage";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { useCallback, useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Page() {
   const [images, setImages] = useState<Record<string, any>[]>([]);
   const [category, setCategory] = useState<string>("");
   const [searchText, setSearchText] = useState<string>("");
+  const [filters, setFilters] = useState<Record<string, any>>({});
+
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
   useEffect(() => {
     async function fetchData() {
       const data = await getImages({});
@@ -42,16 +55,41 @@ export default function Page() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedHandleSearch = useCallback(debounce(handleSearch, 600), []);
 
+  const handlePresentModalPress = useCallback(() => {
+    bottomSheetModalRef.current?.present();
+  }, []);
+
+  const handleCloseModalPress = useCallback(() => {
+    bottomSheetModalRef.current?.close();
+  }, []);
+
+  const handleFilterApply = () => {
+    const params = { ...filters };
+
+    if (category) params.category = category;
+    if (searchText) params.q = searchText;
+
+    fetchData(params);
+    handleCloseModalPress();
+  };
+  const handleFilterReset = () => {
+    setFilters({});
+    fetchData({});
+    handleCloseModalPress();
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
         <View style={styles.headerContainter}>
           <Text style={styles.titleText}>Pixily</Text>
-          <FontAwesome6
-            name="bars-staggered"
-            size={24}
-            color={theme.Colors.neutral(0.7)}
-          />
+          <Pressable onPress={handlePresentModalPress}>
+            <FontAwesome6
+              name="bars-staggered"
+              size={24}
+              color={theme.Colors.neutral(0.7)}
+            />
+          </Pressable>
         </View>
         <View style={styles.inputContainer}>
           <FontAwesome6
@@ -72,6 +110,13 @@ export default function Page() {
         </View>
         <Gallery images={images} />
       </ScrollView>
+      <Modal
+        filters={filters}
+        handleFilterApply={handleFilterApply}
+        handleFilterReset={handleFilterReset}
+        setFilters={setFilters}
+        bottomSheetModalRef={bottomSheetModalRef}
+      />
     </SafeAreaView>
   );
 }
