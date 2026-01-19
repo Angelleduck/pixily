@@ -1,8 +1,7 @@
 import { theme } from "@/constants/theme";
 import { getImageSize, wp } from "@/helper/common";
 import { Image } from "expo-image";
-import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 
 interface ImageProps {
   item: Record<string, any>;
@@ -22,7 +21,12 @@ export function ImageCard({ item, index }: ImageProps) {
     : { marginLeft: wp(1) };
 
   return (
-    <View style={[styles.card, sizeStyle(), columnMargin]}>
+    <Pressable
+      onPress={() => {
+        console.log(item.pageURL);
+      }}
+      style={[styles.card, sizeStyle(), columnMargin]}
+    >
       <Image
         transition={150}
         style={[sizeStyle()]}
@@ -31,7 +35,7 @@ export function ImageCard({ item, index }: ImageProps) {
         accessible
         accessibilityLabel={`pixily-image-${index + 1}`}
       />
-    </View>
+    </Pressable>
   );
 }
 

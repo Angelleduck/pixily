@@ -7,11 +7,11 @@ import { hp } from "@/helper/common";
 import { debounce } from "@/helper/utils";
 import { getImages } from "@/service/apiImage";
 import { FontAwesome6 } from "@expo/vector-icons";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -28,15 +28,20 @@ export default function Page() {
   const [searchText, setSearchText] = useState<string>("");
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isHide, setIsHide] = useState<boolean>(false);
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const lastScrollY = useRef(0);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+
     async function fetchData() {
       const data = await getImages({});
       setImages(data);
-      setIsLoading(false);
     }
     fetchData();
   }, []);
@@ -90,6 +95,12 @@ export default function Page() {
     fetchData({});
     handleCloseModalPress();
   };
+  const scrollToTop = () => {
+    scrollViewRef.current?.scrollTo({
+      y: 0,
+      animated: true,
+    });
+  };
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentHeight = e.nativeEvent.contentSize.height;
@@ -108,8 +119,10 @@ export default function Page() {
       fetchData(params, true);
     }
 
-    if (scrollOffest < lastScrollY.current) {
-      console.log("scrolled Up");
+    if (scrollOffest > lastScrollY.current && scrollOffest > 30) {
+      setIsHide(true);
+    } else {
+      setIsHide(false);
     }
 
     lastScrollY.current = scrollOffest;
@@ -117,9 +130,21 @@ export default function Page() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView onScroll={onScroll} scrollEventThrottle={16}>
-        <View style={styles.headerContainter}>
-          <Text style={styles.titleText}>Pixily</Text>
+      <View style={[{ zIndex: 10 }, isHide ? { opacity: 0 } : { opacity: 1 }]}>
+        <Pressable
+          style={[
+            styles.headerContainter,
+            {
+              position: "absolute",
+              top: 0,
+              width: "100%",
+              backgroundColor: "#f0f0f0",
+            },
+          ]}
+        >
+          <Text onPress={scrollToTop} style={styles.titleText}>
+            Pixily
+          </Text>
           <Pressable onPress={handlePresentModalPress}>
             <FontAwesome6
               name="bars-staggered"
@@ -127,8 +152,14 @@ export default function Page() {
               color={theme.Colors.neutral(0.7)}
             />
           </Pressable>
-        </View>
-        <View style={styles.inputContainer}>
+        </Pressable>
+      </View>
+      <ScrollView
+        ref={scrollViewRef}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
+        <View style={[styles.inputContainer, { marginTop: 53.5 }]}>
           <FontAwesome6
             name="magnifying-glass"
             size={20}

@@ -1,8 +1,9 @@
 import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helper/common";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 export default function Index() {
@@ -10,11 +11,9 @@ export default function Index() {
     <View
       style={{
         flex: 1,
-        justifyContent: "center",
       }}
     >
       <Image
-        resizeMode="cover"
         style={styles.image}
         source={require("../assets/images/home-image.jpg")}
       />
