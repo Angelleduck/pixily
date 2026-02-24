@@ -1,6 +1,6 @@
 import { categories } from "@/constants/data";
 import { theme } from "@/constants/theme";
-import { useMemo } from "react";
+import { memo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import Animated, { FadeInRight } from "react-native-reanimated";
 
@@ -8,55 +8,74 @@ interface CategoriesProps {
   category: string;
   handleCategory: (item: string) => void;
 }
+interface CategoryItemProps {
+  category: string;
+  handleCategory: (item: string) => void;
+  item: string;
+  idx: number;
+}
 
-export function Categories({ category, handleCategory }: CategoriesProps) {
-  console.log("cate re-render");
-  const categoryItems = useMemo(() => {
-    return categories.map((item, idx) => (
-      <Animated.View
-        entering={FadeInRight.delay(idx * 200)
-          .duration(1000)
-          .springify()}
-        key={item}
-        style={[styles.categoryBox]}
-      >
-        <Pressable
-          style={[
-            styles.categoryButton,
-            category === item && {
-              backgroundColor: theme.Colors.neutral(0.8),
-            },
-          ]}
-          onPress={() => {
-            handleCategory(item);
-          }}
-        >
-          <Text
-            style={[
-              styles.categoryText,
-              category === item && {
-                color: theme.Colors.white,
-              },
-            ]}
-          >
-            {item}
-          </Text>
-        </Pressable>
-      </Animated.View>
-    ));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category]);
-
+export const Categories = memo(function Categories({
+  category,
+  handleCategory,
+}: CategoriesProps) {
   return (
     <ScrollView
       horizontal={true}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.filter}
     >
-      {categoryItems}
+      {categories.map((item, idx) => (
+        <CategoryItem
+          key={idx}
+          category={category}
+          handleCategory={handleCategory}
+          idx={idx}
+          item={item}
+        />
+      ))}
     </ScrollView>
   );
-}
+});
+
+const CategoryItem = ({
+  category,
+  handleCategory,
+  item,
+  idx,
+}: CategoryItemProps) => {
+  return (
+    <Animated.View
+      entering={FadeInRight.delay(idx * 200)
+        .duration(1000)
+        .springify()}
+      style={[styles.categoryBox]}
+    >
+      <Pressable
+        style={[
+          styles.categoryButton,
+          category === item && {
+            backgroundColor: theme.Colors.neutral(0.8),
+          },
+        ]}
+        onPress={() => {
+          handleCategory(item);
+        }}
+      >
+        <Text
+          style={[
+            styles.categoryText,
+            category === item && {
+              color: theme.Colors.white,
+            },
+          ]}
+        >
+          {item}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+};
 
 const styles = StyleSheet.create({
   filter: {
