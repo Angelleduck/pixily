@@ -10,6 +10,7 @@ export const getImages = async (params: Record<string, any>) => {
     const value = key === "q" ? encodeURI(params[key]) : params[key];
     url += `&${key}=${value}`;
   });
+  console.log(url);
 
   const res = await ky.get<ImageResponse>(url).json();
   return res.hits;

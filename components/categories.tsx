@@ -10,6 +10,7 @@ interface CategoriesProps {
 }
 
 export function Categories({ category, handleCategory }: CategoriesProps) {
+  console.log("cate re-render");
   const categoryItems = useMemo(() => {
     return categories.map((item, idx) => (
       <Animated.View

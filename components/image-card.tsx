@@ -28,7 +28,7 @@ export function ImageCard({ item, index }: ImageProps) {
       style={[styles.card, sizeStyle(), columnMargin]}
     >
       <Image
-        transition={150}
+        // transition={150}
         style={[sizeStyle()]}
         source={item.webformatURL}
         contentFit="cover"

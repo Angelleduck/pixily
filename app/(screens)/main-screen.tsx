@@ -1,6 +1,5 @@
 import { Categories } from "@/components/categories";
-import Gallery from "@/components/gallery";
-import Loader from "@/components/Loader";
+import { ImageCard } from "@/components/image-card";
 import Modal from "@/components/modal";
 import { theme } from "@/constants/theme";
 import { hp } from "@/helper/common";
@@ -8,10 +7,11 @@ import { debounce } from "@/helper/utils";
 import { getImages } from "@/service/apiImage";
 import { FontAwesome6 } from "@expo/vector-icons";
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { FlashList } from "@shopify/flash-list";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -27,7 +27,6 @@ export default function Page() {
   const [category, setCategory] = useState<string>("");
   const [searchText, setSearchText] = useState<string>("");
   const [filters, setFilters] = useState<Record<string, any>>({});
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isHide, setIsHide] = useState<boolean>(false);
 
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -35,10 +34,6 @@ export default function Page() {
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-
     async function fetchData() {
       const data = await getImages({});
       setImages(data);
@@ -46,32 +41,46 @@ export default function Page() {
     fetchData();
   }, []);
 
-  async function fetchData(params: Record<string, any>, append = false) {
-    const data = await getImages(params);
+  const fetchData = useCallback(
+    async (params: Record<string, any>, append = false) => {
+      const data = await getImages(params);
 
-    if (append) {
-      setImages((prevImages) => [...prevImages, ...data]);
-    } else {
-      setImages(data);
-    }
-  }
-  function handleSearch(value: string) {
-    setSearchText(value);
-    fetchData({ q: value });
-  }
-  const handleCategory = (value: string) => {
-    if (category === value) {
-      setCategory("");
-      fetchData({});
-    } else {
-      setCategory(value);
-      fetchData({ category: value });
-    }
-    page = 1;
-  };
+      if (append) {
+        setImages((prevImages) => [...prevImages, ...data]);
+      } else {
+        setImages(data);
+      }
+    },
+    [],
+  );
+
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearchText(value);
+      const params = { q: value };
+      if (category) params.category = category;
+      fetchData(params);
+    },
+    [fetchData, category],
+  );
+  const handleCategory = useCallback(
+    (value: string) => {
+      if (category === value) {
+        setCategory("");
+        fetchData({});
+      } else {
+        setCategory(value);
+        fetchData({ category: value });
+      }
+      page = 1;
+    },
+    [category, fetchData],
+  );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedHandleSearch = useCallback(debounce(handleSearch, 600), []);
+  const debouncedHandleSearch = useCallback(debounce(handleSearch, 600), [
+    handleSearch,
+  ]);
 
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
@@ -94,7 +103,9 @@ export default function Page() {
     setFilters({});
     fetchData({});
     handleCloseModalPress();
+    scrollToTop();
   };
+
   const scrollToTop = () => {
     scrollViewRef.current?.scrollTo({
       y: 0,
@@ -115,6 +126,7 @@ export default function Page() {
 
       if (category) params.category = category;
       if (searchText) params.q = searchText;
+      if (filters) Object.assign(params, filters);
 
       fetchData(params, true);
     }
@@ -154,31 +166,40 @@ export default function Page() {
           </Pressable>
         </Pressable>
       </View>
-      <ScrollView
-        ref={scrollViewRef}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-      >
-        <View style={[styles.inputContainer, { marginTop: 53.5 }]}>
-          <FontAwesome6
-            name="magnifying-glass"
-            size={20}
-            color={theme.Colors.neutral(0.3)}
-          />
-          <TextInput
-            style={styles.textInput}
-            onChangeText={(text) => {
-              debouncedHandleSearch(text);
-            }}
-            placeholder="search for photos..."
-          />
-        </View>
-        <View>
-          <Categories category={category} handleCategory={handleCategory} />
-        </View>
 
-        {isLoading ? <Loader /> : <Gallery images={images} />}
-      </ScrollView>
+      <FlashList
+        ref={scrollViewRef}
+        masonry
+        numColumns={2}
+        data={images}
+        optimizeItemArrangement={false}
+        onScroll={onScroll}
+        ListHeaderComponent={
+          <>
+            <View style={[styles.inputContainer, { marginTop: 53.5 }]}>
+              <FontAwesome6
+                name="magnifying-glass"
+                size={20}
+                color={theme.Colors.neutral(0.3)}
+              />
+              <TextInput
+                style={styles.textInput}
+                onChangeText={(text) => {
+                  debouncedHandleSearch(text);
+                }}
+                placeholder="search for photos..."
+              />
+            </View>
+            <View>
+              <Categories category={category} handleCategory={handleCategory} />
+            </View>
+          </>
+        }
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
+          <ImageCard item={item} index={index} />
+        )}
+      />
       <Modal
         filters={filters}
         handleFilterApply={handleFilterApply}
