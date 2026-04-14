@@ -1,19 +1,20 @@
 import { Categories } from "@/components/categories";
 import { ImageCard } from "@/components/image-card";
 import Modal from "@/components/modal";
+import { MainImage } from "@/components/single-image";
 import { theme } from "@/constants/theme";
 import { hp } from "@/helper/common";
 import { debounce } from "@/helper/utils";
-import { getImages } from "@/service/apiImage";
+import { useFetch } from "@/hooks/useFetch";
+import { useImage } from "@/hooks/useImage";
+import { useModal } from "@/hooks/useModal";
+import type { ImageType } from "@/types";
 import { FontAwesome6 } from "@expo/vector-icons";
-import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
+  ActivityIndicator,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -21,194 +22,153 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-let page = 1;
 export default function Page() {
-  const [images, setImages] = useState<Record<string, any>[]>([]);
-  const [category, setCategory] = useState<string>("");
-  const [searchText, setSearchText] = useState<string>("");
-  const [filters, setFilters] = useState<Record<string, any>>({});
-  const [isHide, setIsHide] = useState<boolean>(false);
+  const {
+    images,
+    setImages,
+    isLoading,
+    selectedImage,
+    handleSelectedImage,
+    scrollToTop,
+    flashListRef,
+    onScroll,
+    isHide,
+  } = useImage();
 
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const lastScrollY = useRef(0);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const {
+    handleCloseModalPress,
+    handlePresentModalPress,
+    bottomSheetModalRef,
+  } = useModal();
 
-  useEffect(() => {
-    async function fetchData() {
-      const data = await getImages({});
-      setImages(data);
-    }
-    fetchData();
-  }, []);
-
-  const fetchData = useCallback(
-    async (params: Record<string, any>, append = false) => {
-      const data = await getImages(params);
-
-      if (append) {
-        setImages((prevImages) => [...prevImages, ...data]);
-      } else {
-        setImages(data);
-      }
-    },
-    [],
-  );
-
-  const handleSearch = useCallback(
-    (value: string) => {
-      setSearchText(value);
-      const params = { q: value };
-      if (category) params.category = category;
-      fetchData(params);
-    },
-    [fetchData, category],
-  );
-  const handleCategory = useCallback(
-    (value: string) => {
-      if (category === value) {
-        setCategory("");
-        fetchData({});
-      } else {
-        setCategory(value);
-        fetchData({ category: value });
-      }
-      page = 1;
-    },
-    [category, fetchData],
-  );
+  const {
+    category,
+    filters,
+    setFilters,
+    handleSearch,
+    handleCategory,
+    handleLoadMore,
+    loadingMore,
+    handleFilterApply,
+    handleFilterReset,
+  } = useFetch({
+    setImages,
+    handleCloseModalPress,
+    scrollToTop,
+  });
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedHandleSearch = useCallback(debounce(handleSearch, 600), [
     handleSearch,
   ]);
 
-  const handlePresentModalPress = useCallback(() => {
-    bottomSheetModalRef.current?.present();
-  }, []);
+  //later : I try to work on perf later build with eas and check how is it.
+  if (isLoading) {
+    return (
+      <SafeAreaView
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          display: "flex",
+          flex: 1,
+        }}
+      >
+        <Text>Loading</Text>
+      </SafeAreaView>
+    );
+  } else {
+    return (
+      <>
+        <SafeAreaView style={styles.container}>
+          <View
+            style={[{ zIndex: 10 }, isHide ? { opacity: 0 } : { opacity: 1 }]}
+          >
+            <Pressable style={styles.headerContainter}>
+              <Text onPress={scrollToTop} style={styles.titleText}>
+                Pixily
+              </Text>
+              <Pressable onPress={handlePresentModalPress}>
+                <FontAwesome6
+                  name="bars-staggered"
+                  size={24}
+                  color={theme.Colors.neutral(0.7)}
+                />
+              </Pressable>
+            </Pressable>
+          </View>
 
-  const handleCloseModalPress = useCallback(() => {
-    bottomSheetModalRef.current?.close();
-  }, []);
-
-  const handleFilterApply = () => {
-    const params = { ...filters };
-
-    if (category) params.category = category;
-    if (searchText) params.q = searchText;
-
-    fetchData(params);
-    handleCloseModalPress();
-  };
-  const handleFilterReset = () => {
-    setFilters({});
-    fetchData({});
-    handleCloseModalPress();
-    scrollToTop();
-  };
-
-  const scrollToTop = () => {
-    scrollViewRef.current?.scrollTo({
-      y: 0,
-      animated: true,
-    });
-  };
-
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const contentHeight = e.nativeEvent.contentSize.height;
-    const scrollOffest = e.nativeEvent.contentOffset.y;
-    const scrollViewHeight = e.nativeEvent.layoutMeasurement.height;
-
-    const bottomPosition = contentHeight - scrollViewHeight;
-
-    if (scrollOffest >= bottomPosition - 1) {
-      page += 1;
-      const params: Record<string, any> = { page };
-
-      if (category) params.category = category;
-      if (searchText) params.q = searchText;
-      if (filters) Object.assign(params, filters);
-
-      fetchData(params, true);
-    }
-
-    if (scrollOffest > lastScrollY.current && scrollOffest > 30) {
-      setIsHide(true);
-    } else {
-      setIsHide(false);
-    }
-
-    lastScrollY.current = scrollOffest;
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={[{ zIndex: 10 }, isHide ? { opacity: 0 } : { opacity: 1 }]}>
-        <Pressable
-          style={[
-            styles.headerContainter,
-            {
-              position: "absolute",
-              top: 0,
-              width: "100%",
-              backgroundColor: "#f0f0f0",
-            },
-          ]}
-        >
-          <Text onPress={scrollToTop} style={styles.titleText}>
-            Pixily
-          </Text>
-          <Pressable onPress={handlePresentModalPress}>
-            <FontAwesome6
-              name="bars-staggered"
-              size={24}
-              color={theme.Colors.neutral(0.7)}
-            />
-          </Pressable>
-        </Pressable>
-      </View>
-
-      <FlashList
-        ref={scrollViewRef}
-        masonry
-        numColumns={2}
-        data={images}
-        optimizeItemArrangement={false}
-        onScroll={onScroll}
-        ListHeaderComponent={
-          <>
-            <View style={[styles.inputContainer, { marginTop: 53.5 }]}>
-              <FontAwesome6
-                name="magnifying-glass"
-                size={20}
-                color={theme.Colors.neutral(0.3)}
+          <FlashList
+            ref={flashListRef}
+            masonry
+            numColumns={2}
+            data={images}
+            optimizeItemArrangement={false}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.2}
+            onScroll={onScroll}
+            ListHeaderComponent={
+              <>
+                <View style={styles.inputContainer}>
+                  <FontAwesome6
+                    name="magnifying-glass"
+                    size={20}
+                    color={theme.Colors.neutral(0.3)}
+                  />
+                  <TextInput
+                    style={styles.textInput}
+                    onChangeText={(text) => {
+                      debouncedHandleSearch(text);
+                    }}
+                    placeholder="search for photos..."
+                  />
+                </View>
+                <View>
+                  <Categories
+                    category={category}
+                    handleCategory={handleCategory}
+                  />
+                </View>
+              </>
+            }
+            ListFooterComponent={
+              loadingMore ? (
+                <View style={{ paddingVertical: 20 }}>
+                  <ActivityIndicator size="large" color={theme.Colors.Black} />
+                </View>
+              ) : null
+            }
+            keyExtractor={(item) => String(item.id)}
+            renderItem={({
+              item,
+              index,
+            }: {
+              item: ImageType;
+              index: number;
+            }) => (
+              <ImageCard
+                item={item}
+                index={index}
+                onSelectImage={handleSelectedImage}
               />
-              <TextInput
-                style={styles.textInput}
-                onChangeText={(text) => {
-                  debouncedHandleSearch(text);
-                }}
-                placeholder="search for photos..."
-              />
-            </View>
-            <View>
-              <Categories category={category} handleCategory={handleCategory} />
-            </View>
-          </>
-        }
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <ImageCard item={item} index={index} />
+            )}
+          />
+          <Modal
+            filters={filters}
+            handleFilterApply={handleFilterApply}
+            handleFilterReset={handleFilterReset}
+            setFilters={setFilters}
+            bottomSheetModalRef={bottomSheetModalRef}
+          />
+        </SafeAreaView>
+        {selectedImage && (
+          <MainImage
+            onSelectImage={handleSelectedImage}
+            selectedImage={selectedImage}
+          />
         )}
-      />
-      <Modal
-        filters={filters}
-        handleFilterApply={handleFilterApply}
-        handleFilterReset={handleFilterReset}
-        setFilters={setFilters}
-        bottomSheetModalRef={bottomSheetModalRef}
-      />
-    </SafeAreaView>
-  );
+      </>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -227,6 +187,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 4,
+    position: "absolute",
+    top: 0,
+    width: "100%",
+    backgroundColor: "#f0f0f0",
   },
   inputContainer: {
     flexDirection: "row",
@@ -239,6 +203,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     backgroundColor: "white",
     marginBottom: 13,
+    marginTop: 53.5,
   },
   textInput: {
     fontSize: hp(1.8),

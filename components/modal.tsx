@@ -1,10 +1,10 @@
 import {
   BottomSheetBackdrop,
-  BottomSheetBackdropProps,
+  type BottomSheetBackdropProps,
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { BlurView } from "expo-blur";
+import { BlurView } from "@sbaiahmed1/react-native-blur";
 import { useCallback } from "react";
 import { StyleSheet } from "react-native";
 import { Filter } from "./filter";
@@ -25,16 +25,25 @@ export default function Modal({
 }: ModalProps) {
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0}>
+      <>
+        {/* don't forget to uninstall expo-blur  later */}
+
         <BlurView
-          style={[StyleSheet.absoluteFill]}
-          intensity={1}
-          tint="dark"
-          experimentalBlurMethod="dimezisBlurView"
+          blurType="systemChromeMaterialDark"
+          blurAmount={10}
+          style={{
+            ...StyleSheet.absoluteFill,
+          }}
         />
-      </BottomSheetBackdrop>
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          opacity={0}
+        />
+      </>
     ),
-    []
+    [],
   );
 
   return (

@@ -1,14 +1,16 @@
 import { theme } from "@/constants/theme";
 import { getImageSize, wp } from "@/helper/common";
+import type { ImageType } from "@/types";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet } from "react-native";
 
 interface ImageProps {
-  item: Record<string, any>;
+  item: ImageType;
   index: number;
+  onSelectImage: (image: ImageType) => void;
 }
 
-export function ImageCard({ item, index }: ImageProps) {
+export function ImageCard({ item, index, onSelectImage }: ImageProps) {
   const sizeStyle = () => {
     const height = item.webformatHeight;
     const width = item.webformatWidth;
@@ -23,18 +25,28 @@ export function ImageCard({ item, index }: ImageProps) {
   return (
     <Pressable
       onPress={() => {
-        console.log(item.pageURL);
+        onSelectImage(item);
       }}
       style={[styles.card, sizeStyle(), columnMargin]}
     >
       <Image
-        // transition={150}
+        transition={150}
         style={[sizeStyle()]}
         source={item.webformatURL}
         contentFit="cover"
         accessible
         accessibilityLabel={`pixily-image-${index + 1}`}
       />
+
+      {/* react-native Image component */}
+      {/* <Image
+        // transition={150}
+        style={[sizeStyle()]}
+        source={{ uri: item.webformatURL }}
+        // contentFit="cover"
+        accessible
+        accessibilityLabel={`pixily-image-${index + 1}`}
+      /> */}
     </Pressable>
   );
 }
