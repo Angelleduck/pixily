@@ -51,6 +51,8 @@ export default function Page() {
     loadingMore,
     handleFilterApply,
     handleFilterReset,
+    refreshing,
+    handleRefreshing,
   } = useFetch({
     setImages,
     handleCloseModalPress,
@@ -81,7 +83,7 @@ export default function Page() {
       <>
         <SafeAreaView style={styles.container}>
           <View
-            style={[{ zIndex: 10 }, isHide ? { opacity: 0 } : { opacity: 1 }]}
+            style={[{ zIndex: 5 }, isHide ? { opacity: 0 } : { opacity: 1 }]}
           >
             <Pressable style={styles.headerContainter}>
               <Text onPress={scrollToTop} style={styles.titleText}>
@@ -106,6 +108,9 @@ export default function Page() {
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.2}
             onScroll={onScroll}
+            refreshing={refreshing}
+            onRefresh={handleRefreshing}
+            progressViewOffset={35}
             ListHeaderComponent={
               <>
                 <View style={styles.inputContainer}>

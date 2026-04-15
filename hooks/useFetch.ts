@@ -18,6 +18,7 @@ export function useFetch({
   const [filters, setFilters] = useState<Filters>({});
   const [searchText, setSearchText] = useState<string>("");
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = useCallback(async (params: Params, append = false) => {
     const data = await getImages(params);
@@ -86,10 +87,25 @@ export function useFetch({
   };
 
   const handleFilterReset = () => {
+    let params: Params = {};
+    if (category) params.category = category;
+    if (searchText) params.q = searchText;
+
+    fetchData(params);
     setFilters({});
-    fetchData({});
     handleCloseModalPress();
     scrollToTop();
+  };
+
+  const handleRefreshing = () => {
+    const params: Params = {};
+    if (category) params.category = category;
+    if (searchText) params.q = searchText;
+    if (filters) Object.assign(params, filters);
+
+    setRefreshing(true);
+    fetchData(params);
+    setRefreshing(false);
   };
 
   return {
@@ -104,5 +120,7 @@ export function useFetch({
     loadingMore,
     handleFilterReset,
     handleFilterApply,
+    refreshing,
+    handleRefreshing,
   };
 }
