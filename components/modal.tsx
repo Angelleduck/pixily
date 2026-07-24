@@ -26,8 +26,6 @@ export default function Modal({
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <>
-        {/* don't forget to uninstall expo-blur  later */}
-
         <BlurView
           blurType="systemChromeMaterialDark"
           blurAmount={10}

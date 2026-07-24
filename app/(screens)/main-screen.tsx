@@ -111,6 +111,7 @@ export default function Page() {
             refreshing={refreshing}
             onRefresh={handleRefreshing}
             progressViewOffset={35}
+            showsVerticalScrollIndicator={false}
             ListHeaderComponent={
               <>
                 <View style={styles.inputContainer}>
