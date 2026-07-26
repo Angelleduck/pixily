@@ -11,7 +11,8 @@ import { useModal } from "@/hooks/useModal";
 import type { ImageType } from "@/types";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
-import { useCallback, useRef } from "react";
+import { BlurTargetView } from "expo-blur";
+import { useRef } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -59,10 +60,7 @@ export default function Page() {
     scrollToTop,
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedHandleSearch = useCallback(debounce(handleSearch, 600), [
-    handleSearch,
-  ]);
+  const debouncedHandleSearch = debounce(handleSearch, 600);
 
   const targetRef = useRef<View | null>(null);
 
@@ -83,94 +81,98 @@ export default function Page() {
   } else {
     return (
       <>
-        {/* <BlurTargetView ref={targetRef} style={{ flex: 1 }}> */}
-        <SafeAreaView style={styles.container}>
-          <View
-            style={[{ zIndex: 5 }, isHide ? { opacity: 0 } : { opacity: 1 }]}
-          >
-            <Pressable style={styles.headerContainter}>
-              <Text onPress={scrollToTop} style={styles.titleText}>
-                Pixily
-              </Text>
-              <Pressable onPress={handlePresentModalPress}>
-                <FontAwesome6
-                  name="bars-staggered"
-                  size={24}
-                  color={theme.Colors.neutral(0.7)}
-                />
-              </Pressable>
-            </Pressable>
-          </View>
-
-          <FlashList
-            ref={flashListRef}
-            masonry
-            numColumns={2}
-            data={images}
-            optimizeItemArrangement={false}
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.2}
-            onScroll={onScroll}
-            refreshing={refreshing}
-            onRefresh={handleRefreshing}
-            progressViewOffset={35}
-            showsVerticalScrollIndicator={false}
-            ListHeaderComponent={
-              <>
-                <View style={styles.inputContainer}>
+        <BlurTargetView ref={targetRef} style={{ flex: 1 }}>
+          <SafeAreaView style={styles.container}>
+            <View
+              style={[{ zIndex: 5 }, isHide ? { opacity: 0 } : { opacity: 1 }]}
+            >
+              <Pressable style={styles.headerContainter}>
+                <Text onPress={scrollToTop} style={styles.titleText}>
+                  Pixily
+                </Text>
+                <Pressable onPress={handlePresentModalPress}>
                   <FontAwesome6
-                    name="magnifying-glass"
-                    size={20}
-                    color={theme.Colors.neutral(0.3)}
+                    name="bars-staggered"
+                    size={24}
+                    color={theme.Colors.neutral(0.7)}
                   />
-                  <TextInput
-                    style={styles.textInput}
-                    onChangeText={(text) => {
-                      debouncedHandleSearch(text);
-                    }}
-                    placeholder="search for photos..."
-                  />
-                </View>
-                <View>
-                  <Categories
-                    category={category}
-                    handleCategory={handleCategory}
-                  />
-                </View>
-              </>
-            }
-            ListFooterComponent={
-              loadingMore ? (
-                <View style={{ paddingVertical: 20 }}>
-                  <ActivityIndicator size="large" color={theme.Colors.Black} />
-                </View>
-              ) : null
-            }
-            keyExtractor={(item) => String(item.id)}
-            renderItem={({
-              item,
-              index,
-            }: {
-              item: ImageType;
-              index: number;
-            }) => (
-              <ImageCard
-                item={item}
-                index={index}
-                onSelectImage={handleSelectedImage}
-              />
-            )}
-          />
-          <Modal
-            filters={filters}
-            handleFilterApply={handleFilterApply}
-            handleFilterReset={handleFilterReset}
-            setFilters={setFilters}
-            bottomSheetModalRef={bottomSheetModalRef}
-            targetRef={targetRef}
-          />
-        </SafeAreaView>
-        {/* </BlurTargetView> */}
+                </Pressable>
+              </Pressable>
+            </View>
+
+            <FlashList
+              ref={flashListRef}
+              masonry
+              numColumns={2}
+              data={images}
+              optimizeItemArrangement={false}
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.2}
+              onScroll={onScroll}
+              refreshing={refreshing}
+              onRefresh={handleRefreshing}
+              progressViewOffset={35}
+              showsVerticalScrollIndicator={false}
+              ListHeaderComponent={
+                <>
+                  <View style={styles.inputContainer}>
+                    <FontAwesome6
+                      name="magnifying-glass"
+                      size={20}
+                      color={theme.Colors.neutral(0.3)}
+                    />
+                    <TextInput
+                      style={styles.textInput}
+                      onChangeText={(text) => {
+                        debouncedHandleSearch(text);
+                      }}
+                      placeholder="search for photos..."
+                      placeholderTextColor={"black"}
+                    />
+                  </View>
+                  <View>
+                    <Categories
+                      category={category}
+                      handleCategory={handleCategory}
+                    />
+                  </View>
+                </>
+              }
+              ListFooterComponent={
+                loadingMore ? (
+                  <View style={{ paddingVertical: 20 }}>
+                    <ActivityIndicator
+                      size="large"
+                      color={theme.Colors.Black}
+                    />
+                  </View>
+                ) : null
+              }
+              keyExtractor={(item) => String(item.id)}
+              renderItem={({
+                item,
+                index,
+              }: {
+                item: ImageType;
+                index: number;
+              }) => (
+                <ImageCard
+                  item={item}
+                  index={index}
+                  onSelectImage={handleSelectedImage}
+                />
+              )}
+            />
+            <Modal
+              filters={filters}
+              handleFilterApply={handleFilterApply}
+              handleFilterReset={handleFilterReset}
+              setFilters={setFilters}
+              bottomSheetModalRef={bottomSheetModalRef}
+              targetRef={targetRef}
+            />
+          </SafeAreaView>
+        </BlurTargetView>
         {selectedImage && (
           <MainImage
             onSelectImage={handleSelectedImage}
@@ -220,5 +222,6 @@ const styles = StyleSheet.create({
   textInput: {
     fontSize: hp(1.8),
     flex: 1,
+    color: "black",
   },
 });

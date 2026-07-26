@@ -32,6 +32,7 @@ export function useFetch({
 
   const handleSearch = useCallback(
     (value: string) => {
+      console.log("handlleee");
       setSearchText(value);
       const params: Params = { q: value };
       if (category) params.category = category;
@@ -87,7 +88,7 @@ export function useFetch({
   };
 
   const handleFilterReset = () => {
-    let params: Params = {};
+    const params: Params = {};
     if (category) params.category = category;
     if (searchText) params.q = searchText;
 

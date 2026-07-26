@@ -1,14 +1,14 @@
-import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useCallback, useRef } from "react";
+import type { TrueSheet } from "@lodev09/react-native-true-sheet";
 
 export function useModal() {
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetModalRef = useRef<TrueSheet>(null);
   const handlePresentModalPress = useCallback(() => {
     bottomSheetModalRef.current?.present();
   }, []);
 
   const handleCloseModalPress = useCallback(() => {
-    bottomSheetModalRef.current?.close();
+    bottomSheetModalRef.current?.dismiss();
   }, []);
   return {
     handleCloseModalPress,

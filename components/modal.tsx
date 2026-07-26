@@ -1,15 +1,10 @@
-import {
-  BottomSheetBackdrop,
-  type BottomSheetBackdropProps,
-  BottomSheetModal,
-  BottomSheetView,
-} from "@gorhom/bottom-sheet";
-import { type RefObject, useCallback } from "react";
-import { StyleSheet, View } from "react-native";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import type { RefObject } from "react";
+import { StyleSheet, type View } from "react-native";
 import { Filter } from "./filter";
 
 interface ModalProps {
-  bottomSheetModalRef: React.RefObject<BottomSheetModal | null>;
+  bottomSheetModalRef: React.RefObject<TrueSheet | null>;
   setFilters: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   filters: Record<string, any>;
   handleFilterApply: () => void;
@@ -22,52 +17,27 @@ export default function Modal({
   filters,
   handleFilterApply,
   handleFilterReset,
-  targetRef,
 }: ModalProps) {
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <>
-        {/* <BlurView
-          tint="light"
-          // blurTarget={targetRef}
-          blurMethod="dimezisBlurView"
-          intensity={20}
-          style={{
-            ...StyleSheet.absoluteFill,
-          }}
-        /> */}
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          opacity={0}
-        />
-      </>
-    ),
-    [],
-  );
-
   return (
-    <BottomSheetModal
-      enableDynamicSizing={false}
-      index={0}
-      snapPoints={["75%"]}
-      backdropComponent={renderBackdrop}
+    <TrueSheet
+      style={styles.modal}
       ref={bottomSheetModalRef}
+      detents={[0.6, 1]}
+      cornerRadius={24}
+      backgroundColor={"white"}
     >
-      <BottomSheetView style={styles.contentContainer}>
-        <Filter
-          handleFilterApply={handleFilterApply}
-          handleFilterReset={handleFilterReset}
-          setFilters={setFilters}
-          filters={filters}
-        />
-      </BottomSheetView>
-    </BottomSheetModal>
+      <Filter
+        handleFilterApply={handleFilterApply}
+        handleFilterReset={handleFilterReset}
+        setFilters={setFilters}
+        filters={filters}
+      />
+    </TrueSheet>
   );
 }
 const styles = StyleSheet.create({
-  contentContainer: {
-    flex: 1,
+  modal: {
+    backgroundColor: "white",
+    paddingTop: 35,
   },
 });
