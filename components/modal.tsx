@@ -1,5 +1,4 @@
 import {
-  BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
   type BottomSheetBackdropProps,
@@ -7,6 +6,11 @@ import {
 import { BlurView } from "expo-blur";
 import { useCallback, type RefObject } from "react";
 import { StyleSheet, type View } from "react-native";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedProps,
+} from "react-native-reanimated";
 import { Filter } from "./filter";
 
 interface ModalProps {
@@ -16,6 +20,34 @@ interface ModalProps {
   handleFilterApply: () => void;
   handleFilterReset: () => void;
   targetRef: RefObject<View | null>;
+}
+
+// Animatable BlurView
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+
+// Separate component so hooks follow the rules of hooks cleanly
+function AnimatedBackdrop({
+  animatedIndex,
+  targetRef,
+}: BottomSheetBackdropProps & { targetRef: RefObject<View | null> }) {
+  const animatedProps = useAnimatedProps(() => ({
+    intensity: interpolate(
+      animatedIndex.value,
+      [-1, 0], // input range: closed -> fully open at index 0
+      [0, 20], // output range: intensity 0 -> 20
+      Extrapolation.CLAMP,
+    ),
+  }));
+
+  return (
+    <AnimatedBlurView
+      tint="light"
+      blurTarget={targetRef}
+      blurMethod="dimezisBlurView"
+      animatedProps={animatedProps}
+      style={StyleSheet.absoluteFill}
+    />
+  );
 }
 
 export default function Modal({
@@ -28,25 +60,9 @@ export default function Modal({
 }: ModalProps) {
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
-      <>
-        <BlurView
-          tint="light"
-          blurTarget={targetRef}
-          blurMethod="dimezisBlurView"
-          intensity={20}
-          style={{
-            ...StyleSheet.absoluteFill,
-          }}
-        />
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          opacity={0}
-        />
-      </>
+      <AnimatedBackdrop {...props} targetRef={targetRef} />
     ),
-    [],
+    [targetRef],
   );
 
   return (
@@ -68,6 +84,7 @@ export default function Modal({
     </BottomSheetModal>
   );
 }
+
 const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
