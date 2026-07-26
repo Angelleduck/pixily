@@ -2,18 +2,23 @@ import { theme } from "@/constants/theme";
 import { wp } from "@/helper/common";
 import type { ImageType } from "@/types";
 import { Octicons } from "@expo/vector-icons";
-import BlurView from "@sbaiahmed1/react-native-blur";
+import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
-import { useCallback, useMemo, useState } from "react";
+import { type RefObject, useCallback, useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 import RNBlobUtil from "react-native-blob-util";
 
 interface MainImageProps {
   onSelectImage: (image: ImageType | null) => void;
   selectedImage: ImageType;
+  targetRef: RefObject<View | null>;
 }
 
-export function MainImage({ onSelectImage, selectedImage }: MainImageProps) {
+export function MainImage({
+  onSelectImage,
+  selectedImage,
+  targetRef,
+}: MainImageProps) {
   const [downloading, setDownloading] = useState(false);
   const { imageHeight, imageWidth, largeImageURL, pageURL } = selectedImage;
 
@@ -62,8 +67,10 @@ export function MainImage({ onSelectImage, selectedImage }: MainImageProps) {
 
   return (
     <BlurView
-      blurType="systemUltraThinMaterialDark"
-      blurAmount={10}
+      tint="light"
+      blurTarget={targetRef}
+      blurMethod="dimezisBlurView"
+      intensity={20}
       style={{
         ...StyleSheet.absoluteFill,
       }}

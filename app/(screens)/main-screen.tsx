@@ -11,7 +11,7 @@ import { useModal } from "@/hooks/useModal";
 import type { ImageType } from "@/types";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -64,6 +64,8 @@ export default function Page() {
     handleSearch,
   ]);
 
+  const targetRef = useRef<View | null>(null);
+
   //later : I try to work on perf later build with eas and check how is it.
   if (isLoading) {
     return (
@@ -81,6 +83,7 @@ export default function Page() {
   } else {
     return (
       <>
+        {/* <BlurTargetView ref={targetRef} style={{ flex: 1 }}> */}
         <SafeAreaView style={styles.container}>
           <View
             style={[{ zIndex: 5 }, isHide ? { opacity: 0 } : { opacity: 1 }]}
@@ -164,12 +167,15 @@ export default function Page() {
             handleFilterReset={handleFilterReset}
             setFilters={setFilters}
             bottomSheetModalRef={bottomSheetModalRef}
+            targetRef={targetRef}
           />
         </SafeAreaView>
+        {/* </BlurTargetView> */}
         {selectedImage && (
           <MainImage
             onSelectImage={handleSelectedImage}
             selectedImage={selectedImage}
+            targetRef={targetRef}
           />
         )}
       </>

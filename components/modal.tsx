@@ -4,9 +4,8 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { BlurView } from "@sbaiahmed1/react-native-blur";
-import { useCallback } from "react";
-import { StyleSheet } from "react-native";
+import { type RefObject, useCallback } from "react";
+import { StyleSheet, View } from "react-native";
 import { Filter } from "./filter";
 
 interface ModalProps {
@@ -15,6 +14,7 @@ interface ModalProps {
   filters: Record<string, any>;
   handleFilterApply: () => void;
   handleFilterReset: () => void;
+  targetRef: RefObject<View | null>;
 }
 export default function Modal({
   bottomSheetModalRef,
@@ -22,17 +22,20 @@ export default function Modal({
   filters,
   handleFilterApply,
   handleFilterReset,
+  targetRef,
 }: ModalProps) {
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <>
-        <BlurView
-          blurType="systemChromeMaterialDark"
-          blurAmount={10}
+        {/* <BlurView
+          tint="light"
+          // blurTarget={targetRef}
+          blurMethod="dimezisBlurView"
+          intensity={20}
           style={{
             ...StyleSheet.absoluteFill,
           }}
-        />
+        /> */}
         <BottomSheetBackdrop
           {...props}
           disappearsOnIndex={-1}
