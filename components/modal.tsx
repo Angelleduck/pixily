@@ -69,7 +69,7 @@ export default function Modal({
     <BottomSheetModal
       enableDynamicSizing={false}
       index={0}
-      snapPoints={["65%"]}
+      snapPoints={["72%"]}
       backdropComponent={renderBackdrop}
       ref={bottomSheetModalRef}
     >

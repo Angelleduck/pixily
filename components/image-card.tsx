@@ -37,23 +37,13 @@ export function ImageCard({ item, index, onSelectImage }: ImageProps) {
         accessible
         accessibilityLabel={`pixily-image-${index + 1}`}
       />
-
-      {/* react-native Image component */}
-      {/* <Image
-        // transition={150}
-        style={[sizeStyle()]}
-        source={{ uri: item.webformatURL }}
-        // contentFit="cover"
-        accessible
-        accessibilityLabel={`pixily-image-${index + 1}`}
-      /> */}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: theme.Colors.neutral(0.3),
+    backgroundColor: theme.Colors.neutral(0.2),
     marginBottom: 10,
     borderRadius: theme.radius.lg,
     overflow: "hidden",
