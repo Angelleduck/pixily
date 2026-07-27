@@ -67,12 +67,13 @@ export function MainImage({
 
   return (
     <BlurView
-      tint="light"
       blurTarget={targetRef}
-      blurMethod="dimezisBlurView"
+      tint="systemMaterialLight"
+      blurMethod="dimezisBlurViewSdk31Plus"
       intensity={20}
       style={{
         ...StyleSheet.absoluteFill,
+        backgroundColor: "white",
       }}
     >
       <View

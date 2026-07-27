@@ -12,6 +12,8 @@ export const getImages = async (params: Record<string, any>) => {
       url += `&${key}=${value}`;
     });
 
+    console.log(url);
+
     const res = await ky.get<ImageResponse>(url).json();
     return res.hits as ImageType[];
   } catch {
