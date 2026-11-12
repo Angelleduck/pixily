@@ -3,15 +3,24 @@ import { wp } from "@/helper/common";
 import type { ImageType } from "@/types";
 import { Octicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
+import { File, Paths } from "expo-file-system";
 import { Image } from "expo-image";
-import { type RefObject, useCallback, useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
-import RNBlobUtil from "react-native-blob-util";
+import { Asset, requestPermissionsAsync } from "expo-media-library";
+import * as Sharing from "expo-sharing";
+import {
+  type ComponentRef,
+  type RefObject,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Alert, Platform, Pressable, StyleSheet, View } from "react-native";
 
 interface MainImageProps {
   onSelectImage: (image: ImageType | null) => void;
   selectedImage: ImageType;
-  targetRef: RefObject<View | null>;
+  targetRef: RefObject<ComponentRef<typeof View> | null>;
 }
 
 export function MainImage({
@@ -19,8 +28,9 @@ export function MainImage({
   selectedImage,
   targetRef,
 }: MainImageProps) {
-  const [downloading, setDownloading] = useState(false);
-  const { imageHeight, imageWidth, largeImageURL, pageURL } = selectedImage;
+  const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const { id, imageHeight, imageWidth, largeImageURL } = selectedImage;
 
   const getSize = useMemo(() => {
     const aspectRatio = Number(imageWidth) / Number(imageHeight);
@@ -33,37 +43,65 @@ export function MainImage({
     return { height: calculatedHeight, width: calculatedWidth };
   }, [imageWidth, imageHeight]);
 
-  const handleDownload = useCallback(async () => {
+  const downloadImage = useCallback(async () => {
+    const extension =
+      new URL(largeImageURL).pathname.match(/\.(jpe?g|png|webp|gif)$/i)?.[1] ??
+      "jpg";
+    const destination = new File(Paths.cache, `pixily-${id}.${extension}`);
+    return File.downloadFileAsync(largeImageURL, destination, { idempotent: true });
+  }, [id, largeImageURL]);
+
+  const handleSave = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
     try {
-      if (downloading) return;
-      setDownloading(true);
+      const permission = await requestPermissionsAsync(true, ["photo"]);
+      if (!permission.granted) {
+        Alert.alert("Permission needed", "Allow photo access to save images.");
+        return;
+      }
 
-      const imageName = pageURL.split("/").filter(Boolean).pop();
-      const ext = new URL(largeImageURL).pathname.split(".").pop() ?? "jpg";
-      const filename = `${imageName}.${ext}`;
-
-      const { dirs } = RNBlobUtil.fs;
-
-      await RNBlobUtil.config({
-        addAndroidDownloads: {
-          useDownloadManager: true,
-          notification: true,
-          mime: `image/${ext}`,
-          title: filename,
-          description: "Downloading image...",
-          path: `${dirs.LegacyDownloadDir}/${filename}`,
-          mediaScannable: true,
-        },
-      }).fetch("GET", largeImageURL);
-
-      Alert.alert("Saved!", `Image saved to Downloads/${filename}`);
+      const file = await downloadImage();
+      await Asset.create(file.uri);
+      try {
+        file.delete();
+      } catch (error) {
+        console.warn("Could not remove cached image:", error);
+      }
+      Alert.alert("Saved!", "Image saved to Photos/Gallery.");
     } catch (error) {
-      console.log("Download error:", error);
-      Alert.alert("Error", "Download failed.");
+      console.error("Save error:", error);
+      Alert.alert("Error", "Could not save the image.");
     } finally {
-      setDownloading(false);
+      busyRef.current = false;
+      setBusy(false);
     }
-  }, [largeImageURL, downloading, pageURL]);
+  }, [downloadImage]);
+
+  const handleShare = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
+    try {
+      if (!(await Sharing.isAvailableAsync())) {
+        Alert.alert("Unavailable", "Sharing is not available on this device.");
+        return;
+      }
+
+      const file = await downloadImage();
+      await Sharing.shareAsync(file.uri, {
+        dialogTitle: "Share image",
+        mimeType: file.type || undefined,
+      });
+    } catch (error) {
+      console.error("Share error:", error);
+      Alert.alert("Error", "Could not share the image.");
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  }, [downloadImage]);
 
   return (
     <BlurView
@@ -118,25 +156,34 @@ export function MainImage({
           >
             <Octicons name="x" size={24} color="white" />
           </Pressable>
-          <Pressable
-            onPress={() => handleDownload()}
-            style={{
-              padding: 10,
-              backgroundColor: theme.Colors.neutral(0.6),
-              borderRadius: 10,
-            }}
-          >
-            <Octicons name="download" size={24} color="white" />
-          </Pressable>
-          <Pressable
-            style={{
-              padding: 10,
-              backgroundColor: theme.Colors.neutral(0.6),
-              borderRadius: 10,
-            }}
-          >
-            <Octicons name="share" size={24} color="white" />
-          </Pressable>
+          {Platform.OS !== "web" && (
+            <>
+              <Pressable
+                accessibilityLabel="Save image"
+                disabled={busy}
+                onPress={handleSave}
+                style={{
+                  padding: 10,
+                  backgroundColor: theme.Colors.neutral(0.6),
+                  borderRadius: 10,
+                }}
+              >
+                <Octicons name="download" size={24} color="white" />
+              </Pressable>
+              <Pressable
+                accessibilityLabel="Share image"
+                disabled={busy}
+                onPress={handleShare}
+                style={{
+                  padding: 10,
+                  backgroundColor: theme.Colors.neutral(0.6),
+                  borderRadius: 10,
+                }}
+              >
+                <Octicons name="share" size={24} color="white" />
+              </Pressable>
+            </>
+          )}
         </View>
       </View>
     </BlurView>

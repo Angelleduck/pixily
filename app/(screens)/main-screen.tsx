@@ -2,12 +2,11 @@ import { Gallery } from "@/components/gallery";
 import { MainHeader } from "@/components/main-header";
 import Modal from "@/components/modal";
 import { MainImage } from "@/components/single-image";
-import { debounce } from "@/helper/utils";
 import { useFetch } from "@/hooks/useFetch";
 import { useImage } from "@/hooks/useImage";
 import { useModal } from "@/hooks/useModal";
 import { BlurTargetView } from "expo-blur";
-import { useRef } from "react";
+import { type ComponentRef, useCallback, useEffect, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -32,8 +31,9 @@ export default function Page() {
 
   const {
     category,
-    filters,
-    setFilters,
+    draftFilters,
+    setDraftFilters,
+    resetFilterDraft,
     handleSearch,
     handleCategory,
     handleLoadMore,
@@ -48,9 +48,32 @@ export default function Page() {
     scrollToTop,
   });
 
-  const debouncedHandleSearch = debounce(handleSearch, 600);
+  const handleSearchRef = useRef(handleSearch);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    handleSearchRef.current = handleSearch;
+  }, [handleSearch]);
+  useEffect(
+    () => () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    },
+    [],
+  );
 
-  const targetRef = useRef<View | null>(null);
+  const debouncedHandleSearch = useCallback((text: string) => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(
+      () => handleSearchRef.current(text),
+      600,
+    );
+  }, []);
+
+  const openFilters = useCallback(() => {
+    resetFilterDraft();
+    handlePresentModalPress();
+  }, [resetFilterDraft, handlePresentModalPress]);
+
+  const targetRef = useRef<ComponentRef<typeof View> | null>(null);
 
   //later : I try to work on perf later build with eas and check how is it.
   if (isLoading) {
@@ -74,7 +97,7 @@ export default function Page() {
             <View style={styles.container}>
               <MainHeader
                 isHide={isHide}
-                handlePresentModalPress={handlePresentModalPress}
+                handlePresentModalPress={openFilters}
                 scrollToTop={scrollToTop}
               />
               <Gallery
@@ -91,10 +114,10 @@ export default function Page() {
                 refreshing={refreshing}
               />
               <Modal
-                filters={filters}
+                filters={draftFilters}
                 handleFilterApply={handleFilterApply}
                 handleFilterReset={handleFilterReset}
-                setFilters={setFilters}
+                setFilters={setDraftFilters}
                 bottomSheetModalRef={bottomSheetModalRef}
                 targetRef={targetRef}
               />

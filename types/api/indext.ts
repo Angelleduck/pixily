@@ -1,4 +1,5 @@
 interface Params {
+  page?: number;
   category?: string;
   q?: string;
   order?: string;

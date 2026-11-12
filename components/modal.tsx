@@ -4,7 +4,7 @@ import {
   type BottomSheetBackdropProps,
 } from "@gorhom/bottom-sheet";
 import { BlurView } from "expo-blur";
-import { useCallback, type RefObject } from "react";
+import { useCallback, type ComponentRef, type RefObject } from "react";
 import { StyleSheet, type View } from "react-native";
 import Animated, {
   Extrapolation,
@@ -19,7 +19,7 @@ interface ModalProps {
   filters: Record<string, any>;
   handleFilterApply: () => void;
   handleFilterReset: () => void;
-  targetRef: RefObject<View | null>;
+  targetRef: RefObject<ComponentRef<typeof View> | null>;
 }
 
 // Animatable BlurView
@@ -29,7 +29,7 @@ const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 function AnimatedBackdrop({
   animatedIndex,
   targetRef,
-}: BottomSheetBackdropProps & { targetRef: RefObject<View | null> }) {
+}: BottomSheetBackdropProps & { targetRef: RefObject<ComponentRef<typeof View> | null> }) {
   const animatedProps = useAnimatedProps(() => ({
     intensity: interpolate(
       animatedIndex.value,

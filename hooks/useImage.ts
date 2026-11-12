@@ -1,4 +1,3 @@
-import { getImages } from "@/service/apiImage";
 import type { ImageType } from "@/types";
 import type { FlashListRef } from "@shopify/flash-list";
 import { useEffect, useRef, useState } from "react";
@@ -16,14 +15,6 @@ export function useImage() {
 
   const flashListRef = useRef<FlashListRef<ImageType>>(null);
   const lastScrollY = useRef(0);
-  useEffect(() => {
-    async function fetchData() {
-      const data = await getImages({});
-      setImages(data);
-    }
-    fetchData();
-  }, []);
-
   useEffect(() => {
     setTimeout(() => {
       setIsLoading(false);
